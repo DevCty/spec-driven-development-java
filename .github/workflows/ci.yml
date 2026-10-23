@@ -1,0 +1,39 @@
+name: CI - Auth Service
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Validate OpenAPI spec
+        run: |
+          if [ ! -f src/main/resources/openapi/auth-api.yaml ]; then
+            echo "OpenAPI spec missing" >&2
+            exit 1
+          fi
+          echo "OpenAPI spec found"
+
+      - name: Generate API sources
+        run: mvn -B clean generate-sources
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Build artifact
+        run: mvn -B package -DskipTests
